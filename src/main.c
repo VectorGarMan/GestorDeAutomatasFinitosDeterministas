@@ -96,7 +96,7 @@ int main(void) {
         limpiarPantalla();
         mostrarEncabezado();
         printf("\n");
-        resp_afd = pedirConfirmacion("  Desea registrar otro AFD? (S/N): ");
+        resp_afd = pedirConfirmacion("  \xbf" "Desea registrar otro AFD? (S/N): ");
 
     } while (resp_afd == 'S');
 
@@ -104,7 +104,7 @@ int main(void) {
     mostrarEstadisticasGlobales(&global);
 
     /* RF-15: Mensaje de despedida */
-    printf("\n¡Gracias, adiós!\n\n");
+    printf("\n%cGracias, adi%cs!\n\n", 161, 243);
 
     /* RF-14: Pausa tecnica (congelar pantalla) */
     pausaTecnica();
@@ -193,7 +193,7 @@ static void cicloAFD(char tipoAFD, EstadisticasGlobales *global) {
         }
 
         /* RF-12: Procesar otra palabra con el mismo AFD? */
-        resp_pal = pedirConfirmacion("  Desea procesar otra palabra con este AFD? (S/N): ");
+        resp_pal = pedirConfirmacion("  \xbf" "Desea procesar otra palabra con este AFD? (S/N): ");
 
     } while (resp_pal == 'S');
 

@@ -71,15 +71,15 @@ void actualizarEstadisticasAFD(EstadisticasAFD *e, int esValida, int esAFDT) {
 /*  Retorna   : (void)                                                        */
 /* ========================================================================== */
 void mostrarEstadisticasAFD(const EstadisticasAFD *e) {
-    printf("\n  -- Estadisticas del ciclo del AFD --\n\n");
+    printf("\n  -- Estad%csticas del ciclo del AFD --\n\n", 237);
     printf("    Total de palabras procesadas  : %d\n", e->totalProcesadas);
-    printf("    Palabras VALIDAS              : %d\n", e->totalValidas);
-    printf("    Palabras INVALIDAS            : %d\n", e->totalInvalidas);
+    printf("    Palabras V%cLIDAS              : %d\n", 193, e->totalValidas);
+    printf("    Palabras INV%cLIDAS            : %d\n", 193, e->totalInvalidas);
     if (e->totalTraducidas > 0) {
         printf("    Palabras TRADUCIDAS (AFDT)    : %d\n", e->totalTraducidas);
     }
     /* Verificacion de invariante RF-13: Total_proc = V + U */
-    printf("\n    Verificacion: Total (%d) = Validas (%d) + Invalidas (%d) -> %s\n",
+    printf("\n    Verificaci%cn: Total (%d) = V%clidas (%d) + Inv%clidas (%d) -> %s\n", 243, 225, 160,
            e->totalProcesadas,
            e->totalValidas,
            e->totalInvalidas,
@@ -136,11 +136,11 @@ void mostrarEstadisticasGlobales(const EstadisticasGlobales *g) {
 
     limpiarPantalla();
     mostrarEncabezado();
-    printf("\n  -- Reporte Estadistico Global de la Sesion (RF-14) --\n\n");
-    printf("    Total de AFD registrados       (Z)      : %d\n", g->totalAFD);
+    printf("\n  -- Reporte Estad%cstico Global de la Sesi%cn (RF-14) --\n\n", 237, 243);
+    printf("    Total de AFD registrados       (Z) : %d\n", g->totalAFD);
     printf("    Total de palabras procesadas   (T) : %d\n", tGlob);
-    printf("    Total de palabras VALIDAS      (V) : %d\n", g->totalValidadas);
-    printf("    Total de palabras INVALIDAS    (U) : %d\n", g->totalInvalidas);
+    printf("    Total de palabras V%cLIDAS      (V) : %d\n", 193, g->totalValidadas);
+    printf("    Total de palabras INV%cLIDAS    (U) : %d\n", 193, g->totalInvalidas);
     printf("    Total de palabras TRADUCIDAS   (W) : %d\n", g->totalTraducidas);
     printf("\n");
 }

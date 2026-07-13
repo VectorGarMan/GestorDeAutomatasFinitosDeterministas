@@ -111,5 +111,13 @@ void configurarManejoSenales(void) {
      * especificado en RNF-10.
      */
     SetConsoleCtrlHandler(manejadorConsolaWindows, TRUE);
+
+    /*
+     * SetConsoleOutputCP(1252) -- Forzar Windows-1252 como pagina de codigo
+     * de salida para que los caracteres especiales del espanol (acentos,
+     * signos de interrogacion/exclamacion) se muestren correctamente en
+     * cualquier consola CMD independientemente de su codepage por defecto.
+     */
+    SetConsoleOutputCP(1252);
 #endif
 }

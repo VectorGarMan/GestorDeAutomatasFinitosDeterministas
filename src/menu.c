@@ -108,8 +108,8 @@ void mostrarMenuPrincipal(void) {
     limpiarPantalla();
     mostrarEncabezado();
     printf("\n  -- Menu Principal --\n\n");
-    printf("    [T]  Registrar y procesar un AFDT (Automata de Traduccion)\n");
-    printf("    [V]  Registrar y procesar un AFDV (Automata de Validacion)\n");
+    printf("    [T]  Registrar y procesar un AFDT (Aut%cmata de Traducci%cn)\n", 243, 243);
+    printf("    [V]  Registrar y procesar un AFDV (Aut%cmata de Validaci%cn)\n", 243, 243);
     printf("    [S]  Salir del software\n\n");
 }
 
@@ -128,7 +128,7 @@ char pedirOpcionMenu(void) {
 
     while (1) {
         mostrarMenuPrincipal();
-        printf("  Seleccione una opcion (T/V/S): ");
+        printf("  Seleccione una opci%cn (T/V/S): ", 243);
         leerLinea(buf, MAX_BUF);
 
         /* Validar: exactamente 1 caracter y pertenece a Omega_menu */
@@ -145,7 +145,7 @@ char pedirOpcionMenu(void) {
         /* op no pertenece a Omega_menu o es vacio -> error (RF-01) */
         limpiarPantalla();
         mostrarEncabezado();
-        printf("\n  Error: Opcion invalida. Intente de nuevo.\n\n");
+        printf("\n  Error: Opci%cn inv%clida. Intente de nuevo.\n\n", 243, 225);
     }
 }
 
@@ -176,7 +176,7 @@ char pedirConfirmacion(const char *prompt) {
         }
 
         /* Respuesta invalida */
-        printf("  Error: Respuesta invalida. Ingrese S (si) o N (no).\n\n");
+        printf("  Error: Respuesta inv%clida. Ingrese S (s%c) o N (no).\n\n", 225, 237);
     }
 }
 
@@ -190,7 +190,7 @@ char pedirConfirmacion(const char *prompt) {
 /*  Retorna   : (void)                                                        */
 /* ========================================================================== */
 void pausaTecnica(void) {
-    printf("\n  Presione ENTER para continuar...");
+    printf("\n  Presione ENTER para continuar...\n");
     fflush(stdout);
 
     int c;
