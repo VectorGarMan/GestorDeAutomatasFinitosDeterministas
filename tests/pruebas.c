@@ -1024,6 +1024,13 @@ void ejecutarPruebas(void) {
 #ifdef EJECUCION_PRUEBAS
 int main(void) {
     ejecutarPruebas();
+
+    /* Pausa para que el resultado sea visible al ejecutar con doble click */
+    conEscribir("\n  Presione ENTER para salir...\n");
+    conFlush();
+    char buf[4];
+    conLeerLinea(buf, sizeof(buf));
+
     return (pruebas_fallidas == 0) ? 0 : 1;
 }
 #endif
