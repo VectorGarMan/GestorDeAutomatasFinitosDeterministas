@@ -21,7 +21,6 @@
  */
 
 #include "../include/controles.h"
-#include <stdio.h>
 
 /* ========================================================================== */
 /*  manejadorSenalCtrlC -- RF-16                                              */
@@ -32,8 +31,7 @@
 /*  Retorna   : (void)                                                        */
 /* ========================================================================== */
 void manejadorSenalCtrlC(int senial) {
-    (void)senial; /* Suprimir advertencia de parametro no usado */
-    /* RF-16: absorber la senal y continuar el flujo sin mostrar ningun mensaje */
+    (void)senial;
     signal(SIGINT, manejadorSenalCtrlC);
 }
 
@@ -44,7 +42,6 @@ void manejadorSenalCtrlC(int senial) {
 /* ========================================================================== */
 static void manejadorSenalSIGTERM(int senial) {
     (void)senial;
-    /* RF-16: absorber la senal y continuar el flujo sin mostrar ningun mensaje */
     signal(SIGTERM, manejadorSenalSIGTERM);
 }
 
@@ -52,34 +49,39 @@ static void manejadorSenalSIGTERM(int senial) {
 /* ========================================================================== */
 /*  manejadorConsolaWindows -- RF-16                                          */
 /*                                                                            */
-/*  Proposito : Interceptar eventos de consola de Windows:                    */
+/*  Proposito : Interceptar eventos de consola de Windows.                    */
 /*              CTRL_C_EVENT      -> Ctrl+C                                   */
 /*              CTRL_CLOSE_EVENT  -> Alt+F4 / clic en X de la consola         */
 /*              CTRL_BREAK_EVENT  -> Ctrl+Break                               */
 /*              CTRL_LOGOFF_EVENT -> Cierre de sesion                         */
 /*              CTRL_SHUTDOWN_EVENT -> Apagado del sistema                    */
-/*              Retorna TRUE para indicar que el evento fue absorbido y       */
-/*              el proceso NO debe terminar (flujoActual := flujoActual).     */
+/*                                                                            */
+/*  Para CTRL_CLOSE_EVENT (Alt+F4): Windows ejecuta este manejador en un      */
+/*  hilo dedicado. Si el manejador retorna TRUE, Windows inicia un temporizador*/
+/*  de ~5 segundos tras el cual termina el proceso de todas formas. Para      */
+/*  bloquear el cierre indefinidamente bloqueamos ese hilo con Sleep(INFINITE) */
+/*  mientras el hilo principal sigue ejecutandose normalmente.                */
+/*                                                                            */
 /*  Parametros: tipoEvento -- codigo del evento Win32                         */
-/*  Retorna   : BOOL TRUE si el evento fue manejado, FALSE en caso contrario  */
+/*  Retorna   : BOOL TRUE si el evento fue manejado                           */
 /* ========================================================================== */
 BOOL WINAPI manejadorConsolaWindows(DWORD tipoEvento) {
     switch (tipoEvento) {
         case CTRL_C_EVENT:
-            /* RF-16: absorber el evento y continuar el flujo sin mostrar mensaje */
             return TRUE;
 
         case CTRL_CLOSE_EVENT:
-            /* RF-16: absorber el evento y continuar el flujo sin mostrar mensaje */
-            return TRUE;
-
         case CTRL_BREAK_EVENT:
-            /* RF-16: absorber el evento y continuar el flujo sin mostrar mensaje */
+            /*
+             * Bloquear el hilo del manejador indefinidamente.
+             * El proceso principal continua; Windows no puede terminar el
+             * proceso mientras este hilo este dormido y el principal siga vivo.
+             */
+            Sleep(INFINITE);
             return TRUE;
 
         case CTRL_LOGOFF_EVENT:
         case CTRL_SHUTDOWN_EVENT:
-            /* Para eventos de apagado del SO no bloqueamos el cierre */
             return FALSE;
 
         default:
@@ -97,27 +99,11 @@ BOOL WINAPI manejadorConsolaWindows(DWORD tipoEvento) {
 /*  Retorna   : (void)                                                        */
 /* ========================================================================== */
 void configurarManejoSenales(void) {
-    /* SIGINT  -- Ctrl+C en cualquier sistema POSIX/Windows */
     signal(SIGINT, manejadorSenalCtrlC);
-
-    /* SIGTERM -- kill/terminacion en sistemas POSIX */
     signal(SIGTERM, manejadorSenalSIGTERM);
 
 #ifdef _WIN32
-    /*
-     * SetConsoleCtrlHandler -- API Win32 estandar.
-     * Intercepta: Ctrl+C, Ctrl+Break, Alt+F4, cierre de sesion y apagado.
-     * No es una libreria externa; es la interfaz oficial del SO Windows
-     * especificado en RNF-10.
-     */
     SetConsoleCtrlHandler(manejadorConsolaWindows, TRUE);
-
-    /*
-     * SetConsoleOutputCP(1252) -- Forzar Windows-1252 como pagina de codigo
-     * de salida para que los caracteres especiales del espanol (acentos,
-     * signos de interrogacion/exclamacion) se muestren correctamente en
-     * cualquier consola CMD independientemente de su codepage por defecto.
-     */
     SetConsoleOutputCP(1252);
 #endif
 }

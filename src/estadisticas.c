@@ -18,7 +18,6 @@
  * =============================================================================
  */
 
-#include <stdio.h>
 #include "../include/estadisticas.h"
 #include "../include/menu.h"
 #include "../include/afd.h"
@@ -41,10 +40,6 @@ void inicializarEstadisticasAFD(EstadisticasAFD *e) {
 /*  actualizarEstadisticasAFD -- RF-13                                        */
 /*                                                                            */
 /*  Proposito : Incrementar los contadores segun el resultado de la palabra.  */
-/*              i := i + 1 (incremento del total)                             */
-/*              V += (qn en A ? 1 : 0)                                        */
-/*              U += (qn no en A ? 1 : 0)                                     */
-/*              W += 1 si es AFDT (toda traduccion se cuenta)                 */
 /*  Parametros: e        -- contadores del AFD actual                         */
 /*              esValida -- 1 si la palabra fue aceptada                      */
 /*              esAFDT   -- 1 si el tipo es TIPO_AFDT                         */
@@ -71,20 +66,36 @@ void actualizarEstadisticasAFD(EstadisticasAFD *e, int esValida, int esAFDT) {
 /*  Retorna   : (void)                                                        */
 /* ========================================================================== */
 void mostrarEstadisticasAFD(const EstadisticasAFD *e) {
-    printf("\n  -- Estad%csticas del ciclo del AFD --\n\n", 237);
-    printf("    Total de palabras procesadas  : %d\n", e->totalProcesadas);
-    printf("    Palabras V%cLIDAS              : %d\n", 193, e->totalValidas);
-    printf("    Palabras INV%cLIDAS            : %d\n", 193, e->totalInvalidas);
+    conEscribir("\n  -- Estad\xed" "st\xed" "cas del ciclo del AFD --\n\n");
+    conEscribir("    Total de palabras procesadas  : ");
+    conEscribirInt(e->totalProcesadas);
+    conEscribir("\n");
+
+    conEscribir("    Palabras V\xc1LIDAS              : ");
+    conEscribirInt(e->totalValidas);
+    conEscribir("\n");
+
+    conEscribir("    Palabras INV\xc1LIDAS            : ");
+    conEscribirInt(e->totalInvalidas);
+    conEscribir("\n");
+
     if (e->totalTraducidas > 0) {
-        printf("    Palabras TRADUCIDAS (AFDT)    : %d\n", e->totalTraducidas);
+        conEscribir("    Palabras TRADUCIDAS (AFDT)    : ");
+        conEscribirInt(e->totalTraducidas);
+        conEscribir("\n");
     }
+
     /* Verificacion de invariante RF-13: Total_proc = V + U */
-    printf("\n    Verificaci%cn: Total (%d) = V%clidas (%d) + Inv%clidas (%d) -> %s\n", 243, 225, 160,
-           e->totalProcesadas,
-           e->totalValidas,
-           e->totalInvalidas,
-           (e->totalProcesadas == e->totalValidas + e->totalInvalidas) ? "OK" : "INCONSISTENTE");
-    printf("\n");
+    conEscribir("\n    Verificaci\xf3n: Total (");
+    conEscribirInt(e->totalProcesadas);
+    conEscribir(") = V\xe1lidas (");
+    conEscribirInt(e->totalValidas);
+    conEscribir(") + Inv\xe1lidas (");
+    conEscribirInt(e->totalInvalidas);
+    conEscribir(") -> ");
+    conEscribir((e->totalProcesadas == e->totalValidas + e->totalInvalidas)
+                ? "OK" : "INCONSISTENTE");
+    conEscribir("\n\n");
 }
 
 /* ========================================================================== */
@@ -105,7 +116,6 @@ void inicializarEstadisticasGlobales(EstadisticasGlobales *g) {
 /*  acumularEstadisticasGlobales -- RF-14                                     */
 /*                                                                            */
 /*  Proposito : Sumar contadores del AFD terminado a los globales.            */
-/*              Z += 1; V_glob += V; U_glob += U; W_glob += W (si AFDT)       */
 /*  Parametros: g       -- contadores globales de sesion                      */
 /*              e       -- contadores locales del AFD recien terminado        */
 /*              tipoAFD -- TIPO_AFDT o TIPO_AFDV                              */
@@ -126,8 +136,6 @@ void acumularEstadisticasGlobales(EstadisticasGlobales *g,
 /*  mostrarEstadisticasGlobales -- RF-14                                      */
 /*                                                                            */
 /*  Proposito : Imprimir el reporte estadistico global antes del cierre.      */
-/*              Incluye Z, T_glob = V_glob + U_glob, V_glob, U_glob, W_glob.  */
-/*              Verifica: T_glob = V_glob + U_glob.                           */
 /*  Parametros: g -- puntero a los contadores globales                        */
 /*  Retorna   : (void)                                                        */
 /* ========================================================================== */
@@ -136,11 +144,25 @@ void mostrarEstadisticasGlobales(const EstadisticasGlobales *g) {
 
     limpiarPantalla();
     mostrarEncabezado();
-    printf("\n  -- Reporte Estad%cstico Global de la Sesi%cn (RF-14) --\n\n", 237, 243);
-    printf("    Total de AFD registrados       (Z) : %d\n", g->totalAFD);
-    printf("    Total de palabras procesadas   (T) : %d\n", tGlob);
-    printf("    Total de palabras V%cLIDAS      (V) : %d\n", 193, g->totalValidadas);
-    printf("    Total de palabras INV%cLIDAS    (U) : %d\n", 193, g->totalInvalidas);
-    printf("    Total de palabras TRADUCIDAS   (W) : %d\n", g->totalTraducidas);
-    printf("\n");
+    conEscribir("\n  -- Reporte Estad\xed" "st\xed" "co Global de la Sesi\xf3n (RF-14) --\n\n");
+
+    conEscribir("    Total de AFD registrados       (Z) : ");
+    conEscribirInt(g->totalAFD);
+    conEscribir("\n");
+
+    conEscribir("    Total de palabras procesadas   (T) : ");
+    conEscribirInt(tGlob);
+    conEscribir("\n");
+
+    conEscribir("    Total de palabras V\xc1LIDAS      (V) : ");
+    conEscribirInt(g->totalValidadas);
+    conEscribir("\n");
+
+    conEscribir("    Total de palabras INV\xc1LIDAS    (U) : ");
+    conEscribirInt(g->totalInvalidas);
+    conEscribir("\n");
+
+    conEscribir("    Total de palabras TRADUCIDAS   (W) : ");
+    conEscribirInt(g->totalTraducidas);
+    conEscribir("\n\n");
 }

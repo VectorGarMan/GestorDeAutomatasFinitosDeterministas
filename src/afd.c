@@ -10,8 +10,8 @@
  *   Implementacion de todas las funciones de registro y procesamiento de AFD.
  *
  *   Requerimientos cubiertos:
- *     RF-02  -- Registrar Î£_E
- *     RF-03  -- Registrar Î£_S (solo AFDT)
+ *     RF-02  -- Registrar Sigma_E
+ *     RF-03  -- Registrar Sigma_S (solo AFDT)
  *     RF-04  -- Registrar Q
  *     RF-05  -- Registrar q0
  *     RF-06  -- Registrar A
@@ -31,26 +31,24 @@
 #include "../include/menu.h"
 
 /* -------------------------------------- */
-/*  SECCION 1: Validacion de caracteres                                       */
+/*  SECCION 1: Validacion de caracteres   */
 /* -------------------------------------- */
 
 /*
  * esPermitido -- RF-02, RF-03, RF-04
  * Proposito   : Verificar si c pertenece a Sigma_perm.
- *               Sigma_perm = {a..z, A..Z, 0..9, n, N, vocales con tilde}
- * Parametros  : c -- caracter a validar (unsigned char para evitar UB con isalpha)
+ *               Sigma_perm = {a..z, A..Z, 0..9, vocales con tilde}
+ * Parametros  : c -- caracter a validar (unsigned char para evitar UB)
  * Retorna     : 1 si c pertenece a Sigma_perm, 0 si no.
  */
 int esPermitido(unsigned char c) {
-    /* Caracteres ASCII basicos permitidos */
     if ((c >= 'a' && c <= 'z') ||
         (c >= 'A' && c <= 'Z') ||
         (c >= '0' && c <= '9')) {
         return 1;
     }
     /*
-     * Caracteres especiales del espanol (codificacion Latin-1 / CP1252,
-     * que es la pagina de codigo predeterminada en consolas Windows).
+     * Caracteres especiales del espanol (codificacion Latin-1 / CP1252).
      */
     switch (c) {
         case 0xE1: case 0xE9: case 0xED: case 0xF3: case 0xFA:
@@ -66,7 +64,7 @@ int esPermitido(unsigned char c) {
  * cadenaPermitida -- RF-04
  * Proposito   : Verificar que todos los chars de s pertenezcan a Sigma_perm.
  * Parametros  : s -- cadena a verificar
- * Retorna     : 1 si todos los chars pertenecen a Sigma_perm, 0 si alguno no.
+ * Retorna     : 1 si todos pertenecen, 0 si alguno no.
  */
 int cadenaPermitida(const char *s) {
     if (s == NULL || s[0] == '\0') return 0;
@@ -77,7 +75,7 @@ int cadenaPermitida(const char *s) {
 }
 
 /* ------------------------------------------------------ */
-/*  SECCION 2: Gestion de Simbolos (Sigma_E y Sigma_S)*/
+/*  SECCION 2: Gestion de Simbolos (Sigma_E y Sigma_S)   */
 /* ------------------------------------------------------ */
 
 /*
@@ -104,10 +102,9 @@ int simboloExiste(const Simbolo *cabeza, char c) {
  * Retorna     : (void)
  */
 void agregarSimbolo(Simbolo **cabeza, char c) {
-    /* RNF-01: memoria dinÃ¡mica */
     Simbolo *nuevo = (Simbolo *)malloc(sizeof(Simbolo));
     if (nuevo == NULL) {
-        fprintf(stderr, "Error: No se pudo asignar memoria.\n");
+        conEscribirError("Error: No se pudo asignar memoria.\n");
         return;
     }
     nuevo->valor     = c;
@@ -117,7 +114,6 @@ void agregarSimbolo(Simbolo **cabeza, char c) {
         *cabeza = nuevo;
         return;
     }
-    /* Recorrer hasta el final y enlazar */
     Simbolo *actual = *cabeza;
     while (actual->siguiente != NULL) {
         actual = actual->siguiente;
@@ -126,7 +122,7 @@ void agregarSimbolo(Simbolo **cabeza, char c) {
 }
 
 /*
- * contarSimbolos -- RF-02, RF-03 (validacion de alfabeto no vacio)
+ * contarSimbolos -- RF-02, RF-03
  * Proposito   : Contar los simbolos en una lista de Simbolos.
  * Parametros  : cabeza -- cabeza de la lista
  * Retorna     : numero de simbolos (int)
@@ -164,7 +160,7 @@ void liberarSimbolos(Simbolo **cabeza) {
 /*
  * nodoExiste -- RF-04, RF-05, RF-06, RF-07
  * Proposito   : Buscar un nodo por nombre en la lista Q.
- * Parametros  : cabeza -- cabeza de la lista Q; nombre â nombre del estado
+ * Parametros  : cabeza -- cabeza de la lista Q; nombre -- nombre del estado
  * Retorna     : puntero al Nodo si existe, NULL si no.
  */
 Nodo *nodoExiste(const Nodo *cabeza, const char *nombre) {
@@ -185,15 +181,14 @@ Nodo *nodoExiste(const Nodo *cabeza, const char *nombre) {
  * Retorna     : (void)
  */
 void agregarNodo(Nodo **cabeza, const char *nombre) {
-    /* RNF-01: memoria dinÃ¡mica */
     Nodo *nuevo = (Nodo *)malloc(sizeof(Nodo));
     if (nuevo == NULL) {
-        fprintf(stderr, "Error: No se pudo asignar memoria.\n");
+        conEscribirError("Error: No se pudo asignar memoria.\n");
         return;
     }
     strncpy(nuevo->nombre, nombre, MAX_ESTADO - 1);
     nuevo->nombre[MAX_ESTADO - 1] = '\0';
-    nuevo->aceptacion = 0;   /* Por defecto no es estado de aceptacion */
+    nuevo->aceptacion = 0;
     nuevo->Apuntador  = NULL;
     nuevo->Flecha     = NULL;
 
@@ -209,9 +204,9 @@ void agregarNodo(Nodo **cabeza, const char *nombre) {
 }
 
 /*
- * contarNodos -- RF-04 (validacion Q no vacio)
+ * contarNodos -- RF-04
  * Proposito   : Contar nodos en la lista Q.
- * ParÃ¡metros  : cabeza â cabeza de Q
+ * Parametros  : cabeza -- cabeza de Q
  * Retorna     : numero de nodos (int)
  */
 int contarNodos(const Nodo *cabeza) {
@@ -241,7 +236,7 @@ static void liberarAristas(Arista **cabeza) {
 /*
  * liberarNodos -- RNF-02
  * Proposito   : Liberar todos los Nodos de Q y sus Aristas asociadas.
- * ParÃ¡metros  : cabeza â puntero a la cabeza de Q (queda en NULL)
+ * Parametros  : cabeza -- puntero a la cabeza de Q (queda en NULL)
  * Retorna     : (void)
  */
 void liberarNodos(Nodo **cabeza) {
@@ -263,7 +258,7 @@ void liberarNodos(Nodo **cabeza) {
  * buscarArista -- RF-10, RF-11
  * Proposito   : Localizar la Arista de 'nodo' disparada por 'simbolo'.
  *               Implementa la consulta f(q, s).
- * Parametros  : nodo    -- estado origen; simbolo -- simbolo leido de la palabra
+ * Parametros  : nodo    -- estado origen; simbolo -- simbolo leido
  * Retorna     : puntero a la Arista, o NULL si no esta definida.
  */
 Arista *buscarArista(const Nodo *nodo, char simbolo) {
@@ -286,10 +281,9 @@ Arista *buscarArista(const Nodo *nodo, char simbolo) {
  * Retorna     : (void)
  */
 void agregarArista(Nodo *nodoOrigen, char ALFE, char ALPS, Nodo *destino) {
-    /* RNF-01: memoria dinÃ¡mica */
     Arista *nueva = (Arista *)malloc(sizeof(Arista));
     if (nueva == NULL) {
-        fprintf(stderr, "Error: No se pudo asignar memoria.\n");
+        conEscribirError("Error: No se pudo asignar memoria.\n");
         return;
     }
     nueva->ALFE   = ALFE;
@@ -320,7 +314,6 @@ void agregarArista(Nodo *nodoOrigen, char ALFE, char ALPS, Nodo *destino) {
  *               y Sigma_E contenga al menos un simbolo (CP-09).
  * Parametros  : afd -- puntero al AFD en construccion
  * Retorna     : (void)
- * RF-02
  */
 void registrarAlfaEntrada(AFD *afd) {
     char buf[MAX_BUF];
@@ -330,32 +323,32 @@ void registrarAlfaEntrada(AFD *afd) {
     do {
         limpiarPantalla();
         mostrarEncabezado();
-        printf("\n  -- Registro del Alfabeto de s%cmbolos de entrada (Sigma_E) --\n\n", 237);
+        conEscribir("\n  -- Registro del Alfabeto de s\xedmbolos de entrada (Sigma_E) --\n\n");
 
         /* Mostrar Sigma_E actual */
-        printf("  S%cmbolos registrados en el Alfabeto de s%cmbolos de entrada (Sigma_E): { ", 237, 237);
+        conEscribir("  S\xedmbolos registrados en el Alfabeto de s\xedmbolos de entrada (Sigma_E): { ");
         const Simbolo *actual = afd->alfaEntrada;
         if (actual == NULL) {
-            printf("(vacio)");
+            conEscribir("(vacio)");
         } else {
             while (actual != NULL) {
-                printf("%c", actual->valor);
-                if (actual->siguiente != NULL) printf(", ");
+                conEscribirChar(actual->valor);
+                if (actual->siguiente != NULL) conEscribir(", ");
                 actual = actual->siguiente;
             }
         }
-        printf(" }\n\n");
+        conEscribir(" }\n\n");
 
         /* Capturar simbolo */
-        printf("  Ingrese un s%cmbolo para el Alfabeto de s%cmbolos de entrada (Sigma_E): ", 237, 237);
+        conEscribir("  Ingrese un s\xedmbolo para el Alfabeto de s\xedmbolos de entrada (Sigma_E): ");
         leerLinea(buf, MAX_BUF);
 
         /* Validar: exactamente 1 caracter, no vacio */
         if (buf[0] == '\0' || buf[1] != '\0') {
-            printf("  Error: Entrada inv%clida.\n\n", 225);
+            conEscribir("  Error: Entrada inv\xe1lida.\n\n");
             resp = pedirConfirmacion("  \xbf" "Desea intentar de nuevo? (S/N): ");
             if (resp == 'N' && contarSimbolos(afd->alfaEntrada) == 0) {
-                printf("  Error: El Alfabeto de s%cmbolos de entrada (Sigma_E) debe contener al menos un s%cmbolo.\n\n", 237, 237);
+                conEscribir("  Error: El Alfabeto de s\xedmbolos de entrada (Sigma_E) debe contener al menos un s\xedmbolo.\n\n");
                 resp = 'S';
             }
             continue;
@@ -365,35 +358,38 @@ void registrarAlfaEntrada(AFD *afd) {
 
         /* Validar: c en Sigma_perm */
         if (!esPermitido((unsigned char)c)) {
-            printf("  Error: El s%cmbolo '%c' no est%c permitido.\n\n", 237, c, 225);
+            conEscribir("  Error: El s\xedmbolo '");
+            conEscribirChar(c);
+            conEscribir("' no est\xe1 permitido.\n\n");
             resp = pedirConfirmacion("  \xbf" "Desea intentar de nuevo? (S/N): ");
             if (resp == 'N' && contarSimbolos(afd->alfaEntrada) == 0) {
-                printf("  Error: El Alfabeto de s%cmbolos de entrada (Sigma_E) debe contener al menos un s%cmbolo.\n\n", 237, 237);
+                conEscribir("  Error: El Alfabeto de s\xedmbolos de entrada (Sigma_E) debe contener al menos un s\xedmbolo.\n\n");
                 resp = 'S';
             }
             continue;
         }
 
-        /* Validar: no duplicado (RF-02: purga automaticamente) */
+        /* Validar: no duplicado */
         if (simboloExiste(afd->alfaEntrada, c)) {
-            printf("  Aviso: El s%cmbolo '%c' ya est%c registrado en el Alfabeto de s%cmbolos de entrada (Sigma_E).\n\n", 237, c, 225, 237);
-            /* CP-08: no agrega el duplicado, Sigma_E permanece sin cambios */
+            conEscribir("  Aviso: El s\xedmbolo '");
+            conEscribirChar(c);
+            conEscribir("' ya est\xe1 registrado en el Alfabeto de s\xedmbolos de entrada (Sigma_E).\n\n");
         } else {
-            /* RNF-01: agrega con memoria dinamica */
             agregarSimbolo(&afd->alfaEntrada, c);
-            printf("  S%cmbolo '%c' registrado exitosamente.\n\n", 237, c);
+            conEscribir("  S\xedmbolo '");
+            conEscribirChar(c);
+            conEscribir("' registrado exitosamente.\n\n");
         }
 
         /* Preguntar si continuar */
         char promptSigmaE[128];
-        snprintf(promptSigmaE, sizeof(promptSigmaE),
-                 "  \xbf" "Desea agregar otro s%cmbolo al Alfabeto de s%cmbolos de entrada (Sigma_E)? (S/N): ", 237, 237);
+        conSnprintf(promptSigmaE, sizeof(promptSigmaE),
+                 "  \xbf" "Desea agregar otro s\xedmbolo al Alfabeto de s\xedmbolos de entrada (Sigma_E)? (S/N): ");
         resp = pedirConfirmacion(promptSigmaE);
 
         if (resp == 'N' && contarSimbolos(afd->alfaEntrada) == 0) {
-            /* CP-09: no permite terminar con Sigma_E vacio */
-            printf("  Error: El Alfabeto de s%cmbolos de entrada (Sigma_E) debe contener al menos un s%cmbolo.\n\n", 237, 237);
-            resp = 'S'; /* Forzar continuar */
+            conEscribir("  Error: El Alfabeto de s\xedmbolos de entrada (Sigma_E) debe contener al menos un s\xedmbolo.\n\n");
+            resp = 'S';
         }
 
     } while (resp == 'S');
@@ -405,7 +401,6 @@ void registrarAlfaEntrada(AFD *afd) {
  *               Mismas validaciones que RF-02 pero sobre Sigma_S.
  * Parametros  : afd -- puntero al AFD (debe ser TIPO_AFDT)
  * Retorna     : (void)
- * RF-03
  */
 void registrarAlfaSalida(AFD *afd) {
     char buf[MAX_BUF];
@@ -415,31 +410,31 @@ void registrarAlfaSalida(AFD *afd) {
     do {
         limpiarPantalla();
         mostrarEncabezado();
-        printf("\n  -- Registro del Alfabeto de s%cmbolos de salida (Sigma_S) --\n\n", 237);
+        conEscribir("\n  -- Registro del Alfabeto de s\xedmbolos de salida (Sigma_S) --\n\n");
 
         /* Mostrar Sigma_S actual */
-        printf("  S%cmbolos registrados en el Alfabeto de s%cmbolos de salida (Sigma_S): { ", 237, 237);
+        conEscribir("  S\xedmbolos registrados en el Alfabeto de s\xedmbolos de salida (Sigma_S): { ");
         const Simbolo *actual = afd->alfaSalida;
         if (actual == NULL) {
-            printf("(vacio)");
+            conEscribir("(vacio)");
         } else {
             while (actual != NULL) {
-                printf("%c", actual->valor);
-                if (actual->siguiente != NULL) printf(", ");
+                conEscribirChar(actual->valor);
+                if (actual->siguiente != NULL) conEscribir(", ");
                 actual = actual->siguiente;
             }
         }
-        printf(" }\n\n");
+        conEscribir(" }\n\n");
 
-        printf("  Ingrese un s%cmbolo para el Alfabeto de s%cmbolos de salida (Sigma_S): ", 237, 237);
+        conEscribir("  Ingrese un s\xedmbolo para el Alfabeto de s\xedmbolos de salida (Sigma_S): ");
         leerLinea(buf, MAX_BUF);
 
         /* Validar: exactamente 1 caracter */
         if (buf[0] == '\0' || buf[1] != '\0') {
-            printf("  Error: Entrada inv%clida.\n\n", 225);
+            conEscribir("  Error: Entrada inv\xe1lida.\n\n");
             resp = pedirConfirmacion("  \xbf" "Desea intentar de nuevo? (S/N): ");
             if (resp == 'N' && contarSimbolos(afd->alfaSalida) == 0) {
-                printf("  Error: El Alfabeto de s%cmbolos de salida (Sigma_S) debe contener al menos un s%cmbolo.\n\n", 237, 237);
+                conEscribir("  Error: El Alfabeto de s\xedmbolos de salida (Sigma_S) debe contener al menos un s\xedmbolo.\n\n");
                 resp = 'S';
             }
             continue;
@@ -449,10 +444,12 @@ void registrarAlfaSalida(AFD *afd) {
 
         /* Validar: c en Sigma_perm */
         if (!esPermitido((unsigned char)c)) {
-            printf("  Error: El s%cmbolo '%c' no est%c permitido.\n\n", 237, c, 225);
+            conEscribir("  Error: El s\xedmbolo '");
+            conEscribirChar(c);
+            conEscribir("' no est\xe1 permitido.\n\n");
             resp = pedirConfirmacion("  \xbf" "Desea intentar de nuevo? (S/N): ");
             if (resp == 'N' && contarSimbolos(afd->alfaSalida) == 0) {
-                printf("  Error: El Alfabeto de s%cmbolos de salida (Sigma_S) debe contener al menos un s%cmbolo.\n\n", 237, 237);
+                conEscribir("  Error: El Alfabeto de s\xedmbolos de salida (Sigma_S) debe contener al menos un s\xedmbolo.\n\n");
                 resp = 'S';
             }
             continue;
@@ -460,20 +457,23 @@ void registrarAlfaSalida(AFD *afd) {
 
         /* Validar: no duplicado */
         if (simboloExiste(afd->alfaSalida, c)) {
-            printf("  Aviso: El s%cmbolo '%c' ya est%c registrado en el Alfabeto de s%cmbolos de salida (Sigma_S).\n\n", 237, c, 225, 237);
+            conEscribir("  Aviso: El s\xedmbolo '");
+            conEscribirChar(c);
+            conEscribir("' ya est\xe1 registrado en el Alfabeto de s\xedmbolos de salida (Sigma_S).\n\n");
         } else {
             agregarSimbolo(&afd->alfaSalida, c);
-            printf("  S%cmbolo '%c' registrado exitosamente.\n\n", 237, c);
+            conEscribir("  S\xedmbolo '");
+            conEscribirChar(c);
+            conEscribir("' registrado exitosamente.\n\n");
         }
 
         char promptSigmaS[128];
-        snprintf(promptSigmaS, sizeof(promptSigmaS),
-                 "  \xbf" "Desea agregar otro s%cmbolo al Alfabeto de s%cmbolos de salida (Sigma_S)? (S/N): ", 237, 237);
+        conSnprintf(promptSigmaS, sizeof(promptSigmaS),
+                 "  \xbf" "Desea agregar otro s\xedmbolo al Alfabeto de s\xedmbolos de salida (Sigma_S)? (S/N): ");
         resp = pedirConfirmacion(promptSigmaS);
 
         if (resp == 'N' && contarSimbolos(afd->alfaSalida) == 0) {
-            /* CP-15: no permite terminar con Sigma_S vacio */
-            printf("  Error: El Alfabeto de s%cmbolos de salida (Sigma_S) debe contener al menos un s%cmbolo.\n\n", 237, 237);
+            conEscribir("  Error: El Alfabeto de s\xedmbolos de salida (Sigma_S) debe contener al menos un s\xedmbolo.\n\n");
             resp = 'S';
         }
 
@@ -487,7 +487,6 @@ void registrarAlfaSalida(AFD *afd) {
  *               Purga duplicados automaticamente (RF-04).
  * Parametros  : afd -- puntero al AFD
  * Retorna     : (void)
- * RF-04
  */
 void registrarEstados(AFD *afd) {
     char buf[MAX_BUF];
@@ -497,42 +496,42 @@ void registrarEstados(AFD *afd) {
     do {
         limpiarPantalla();
         mostrarEncabezado();
-        printf("\n  -- Registro del Conjunto de estados posibles (Q) --\n\n");
+        conEscribir("\n  -- Registro del Conjunto de estados posibles (Q) --\n\n");
 
         /* Mostrar Q actual */
-        printf("  Estados registrados en el Conjunto de estados posibles (Q): { ");
+        conEscribir("  Estados registrados en el Conjunto de estados posibles (Q): { ");
         const Nodo *actual = afd->Q;
         if (actual == NULL) {
-            printf("(vacio)");
+            conEscribir("(vacio)");
         } else {
             while (actual != NULL) {
-                printf("%s", actual->nombre);
-                if (actual->Apuntador != NULL) printf(", ");
+                conEscribir(actual->nombre);
+                if (actual->Apuntador != NULL) conEscribir(", ");
                 actual = actual->Apuntador;
             }
         }
-        printf(" }\n\n");
+        conEscribir(" }\n\n");
 
-        printf("  Ingrese el nombre del estado (1-15 caracteres): ");
+        conEscribir("  Ingrese el nombre del estado (1-15 caracteres): ");
         leerLinea(buf, MAX_BUF);
 
         /* Validar: no vacio */
         if (buf[0] == '\0') {
-            printf("  Error: Entrada inv%clida.\n\n", 225);
+            conEscribir("  Error: Entrada inv\xe1lida.\n\n");
             resp = pedirConfirmacion("  \xbf" "Desea intentar de nuevo? (S/N): ");
             if (resp == 'N' && contarNodos(afd->Q) == 0) {
-                printf("  Error: El Conjunto de estados posibles (Q) debe contener al menos un estado.\n\n");
+                conEscribir("  Error: El Conjunto de estados posibles (Q) debe contener al menos un estado.\n\n");
                 resp = 'S';
             }
             continue;
         }
 
-        /* Validar: longitud <= 15 (RF-04: |q| <= 15) */
+        /* Validar: longitud <= 15 */
         if ((int)strlen(buf) > 15) {
-            printf("  Error: El nombre del estado excede 15 caracteres.\n\n");
+            conEscribir("  Error: El nombre del estado excede 15 caracteres.\n\n");
             resp = pedirConfirmacion("  \xbf" "Desea intentar de nuevo? (S/N): ");
             if (resp == 'N' && contarNodos(afd->Q) == 0) {
-                printf("  Error: El Conjunto de estados posibles (Q) debe contener al menos un estado.\n\n");
+                conEscribir("  Error: El Conjunto de estados posibles (Q) debe contener al menos un estado.\n\n");
                 resp = 'S';
             }
             continue;
@@ -540,29 +539,33 @@ void registrarEstados(AFD *afd) {
 
         /* Validar: todos los chars en Sigma_perm */
         if (!cadenaPermitida(buf)) {
-            printf("  Error: El nombre '%s' contiene caracteres no permitidos.\n\n", buf);
+            conEscribir("  Error: El nombre '");
+            conEscribir(buf);
+            conEscribir("' contiene caracteres no permitidos.\n\n");
             resp = pedirConfirmacion("  \xbf" "Desea intentar de nuevo? (S/N): ");
             if (resp == 'N' && contarNodos(afd->Q) == 0) {
-                printf("  Error: El Conjunto de estados posibles (Q) debe contener al menos un estado.\n\n");
+                conEscribir("  Error: El Conjunto de estados posibles (Q) debe contener al menos un estado.\n\n");
                 resp = 'S';
             }
             continue;
         }
 
-        /* Validar: no duplicado -- purga automaticamente (RF-04) */
+        /* Validar: no duplicado */
         if (nodoExiste(afd->Q, buf) != NULL) {
-            printf("  Aviso: El estado '%s' ya est%c registrado en el Conjunto de estados posibles (Q) (duplicado purgado).\n\n", buf, 225);
+            conEscribir("  Aviso: El estado '");
+            conEscribir(buf);
+            conEscribir("' ya est\xe1 registrado en el Conjunto de estados posibles (Q) (duplicado purgado).\n\n");
         } else {
-            /* RNF-01: agrega con memoria dinamica */
             agregarNodo(&afd->Q, buf);
-            printf("  Estado '%s' registrado exitosamente.\n\n", buf);
+            conEscribir("  Estado '");
+            conEscribir(buf);
+            conEscribir("' registrado exitosamente.\n\n");
         }
 
         resp = pedirConfirmacion("  \xbf" "Desea agregar otro estado al Conjunto de estados posibles (Q)? (S/N): ");
 
         if (resp == 'N' && contarNodos(afd->Q) == 0) {
-            /* CP-21: no permite terminar con Q vacio */
-            printf("  Error: El Conjunto de estados posibles (Q) debe contener al menos un estado.\n\n");
+            conEscribir("  Error: El Conjunto de estados posibles (Q) debe contener al menos un estado.\n\n");
             resp = 'S';
         }
 
@@ -575,7 +578,6 @@ void registrarEstados(AFD *afd) {
  *               Si el valor no existe en Q, rechaza y repite.
  * Parametros  : afd -- puntero al AFD
  * Retorna     : (void)
- * RF-05
  */
 void registrarEstadoInicial(AFD *afd) {
     char buf[MAX_BUF];
@@ -586,44 +588,48 @@ void registrarEstadoInicial(AFD *afd) {
     do {
         limpiarPantalla();
         mostrarEncabezado();
-        printf("\n  -- Registro del Estado inicial (q0) --\n\n");
+        conEscribir("\n  -- Registro del Estado inicial (q0) --\n\n");
 
         /* Mostrar Q como referencia */
-        printf("  Estados disponibles en el Conjunto de estados posibles (Q): { ");
+        conEscribir("  Estados disponibles en el Conjunto de estados posibles (Q): { ");
         const Nodo *actual = afd->Q;
         while (actual != NULL) {
-            printf("%s", actual->nombre);
-            if (actual->Apuntador != NULL) printf(", ");
+            conEscribir(actual->nombre);
+            if (actual->Apuntador != NULL) conEscribir(", ");
             actual = actual->Apuntador;
         }
-        printf(" }\n\n");
+        conEscribir(" }\n\n");
 
         /* Mostrar error del intento anterior si lo hay */
         if (mensajeError[0] != '\0') {
-            printf("  %s\n\n", mensajeError);
+            conEscribir("  ");
+            conEscribir(mensajeError);
+            conEscribir("\n\n");
         }
 
-        printf("  Ingrese el Estado inicial (q0): ");
+        conEscribir("  Ingrese el Estado inicial (q0): ");
         leerLinea(buf, MAX_BUF);
 
         /* Validar: no vacio */
         if (buf[0] == '\0') {
-            snprintf(mensajeError, sizeof(mensajeError),
-                     "Error: Entrada inv%clida.", 225);
+            conSnprintf(mensajeError, sizeof(mensajeError),
+                     "Error: Entrada inv\xe1lida.");
             continue;
         }
 
         /* Validar: q0 en Q */
         nodo = nodoExiste(afd->Q, buf);
         if (nodo == NULL) {
-            snprintf(mensajeError, sizeof(mensajeError),
+            conSnprintf(mensajeError, sizeof(mensajeError),
                      "Error: El estado '%s' no existe en el Conjunto de estados posibles (Q).", buf);
         }
 
     } while (nodo == NULL);
 
     afd->q0 = nodo;
-    printf("  Estado inicial (q0) = '%s' registrado exitosamente.\n\n", afd->q0->nombre);
+    conEscribir("  Estado inicial (q0) = '");
+    conEscribir(afd->q0->nombre);
+    conEscribir("' registrado exitosamente.\n\n");
 }
 
 /*
@@ -633,7 +639,6 @@ void registrarEstadoInicial(AFD *afd) {
  *               No permite terminar con A vacio (CP-26).
  * Parametros  : afd -- puntero al AFD
  * Retorna     : (void)
- * RF-06
  */
 void registrarEstadosAceptacion(AFD *afd) {
     char buf[MAX_BUF];
@@ -644,42 +649,42 @@ void registrarEstadosAceptacion(AFD *afd) {
     do {
         limpiarPantalla();
         mostrarEncabezado();
-        printf("\n  -- Registro de los Estados de aceptaci%cn (A) --\n\n", 243);
+        conEscribir("\n  -- Registro de los Estados de aceptaci\xf3n (A) --\n\n");
 
         /* Mostrar A actual */
-        printf("  Estados de aceptaci%cn en A: { ", 243);
+        conEscribir("  Estados de aceptaci\xf3n en A: { ");
         const Nodo *actual = afd->Q;
         int primero = 1;
         while (actual != NULL) {
             if (actual->aceptacion) {
-                if (!primero) printf(", ");
-                printf("%s", actual->nombre);
+                if (!primero) conEscribir(", ");
+                conEscribir(actual->nombre);
                 primero = 0;
             }
             actual = actual->Apuntador;
         }
-        if (primero) printf("(vacio)");
-        printf(" }\n\n");
+        if (primero) conEscribir("(vacio)");
+        conEscribir(" }\n\n");
 
         /* Mostrar Q como referencia */
-        printf("  Estados disponibles en el Conjunto de estados posibles (Q): { ");
+        conEscribir("  Estados disponibles en el Conjunto de estados posibles (Q): { ");
         actual = afd->Q;
         while (actual != NULL) {
-            printf("%s", actual->nombre);
-            if (actual->Apuntador != NULL) printf(", ");
+            conEscribir(actual->nombre);
+            if (actual->Apuntador != NULL) conEscribir(", ");
             actual = actual->Apuntador;
         }
-        printf(" }\n\n");
+        conEscribir(" }\n\n");
 
-        printf("  Ingrese un Estado de aceptaci%cn (A): ", 243);
+        conEscribir("  Ingrese un Estado de aceptaci\xf3n (A): ");
         leerLinea(buf, MAX_BUF);
 
         /* Validar: no vacio */
         if (buf[0] == '\0') {
-            printf("  Error: Entrada inv%clida.\n\n", 225);
+            conEscribir("  Error: Entrada inv\xe1lida.\n\n");
             resp = pedirConfirmacion("  \xbf" "Desea intentar de nuevo? (S/N): ");
             if (resp == 'N' && cantidadAceptacion == 0) {
-                printf("  Error: Los Estados de aceptaci%cn (A) deben contener al menos un estado.\n\n", 243);
+                conEscribir("  Error: Los Estados de aceptaci\xf3n (A) deben contener al menos un estado.\n\n");
                 resp = 'S';
             }
             continue;
@@ -688,24 +693,28 @@ void registrarEstadosAceptacion(AFD *afd) {
         /* Validar: a en Q */
         Nodo *nodo = nodoExiste(afd->Q, buf);
         if (nodo == NULL) {
-            printf("  Error: El estado '%s' no existe en el Conjunto de estados posibles (Q).\n\n", buf);
+            conEscribir("  Error: El estado '");
+            conEscribir(buf);
+            conEscribir("' no existe en el Conjunto de estados posibles (Q).\n\n");
             resp = pedirConfirmacion("  \xbf" "Desea intentar de nuevo? (S/N): ");
             if (resp == 'N' && cantidadAceptacion == 0) {
-                printf("  Error: Los Estados de aceptaci%cn (A) deben contener al menos un estado.\n\n", 243);
+                conEscribir("  Error: Los Estados de aceptaci\xf3n (A) deben contener al menos un estado.\n\n");
                 resp = 'S';
             }
             continue;
         }
 
-        /* Validar: no duplicado en A -- avisa pero permite salir */
+        /* Validar: no duplicado en A */
         if (nodo->aceptacion) {
-            printf("  Aviso: El estado '%s' ya es Estado de aceptaci%cn (A).\n\n", buf, 243);
+            conEscribir("  Aviso: El estado '");
+            conEscribir(buf);
+            conEscribir("' ya es Estado de aceptaci\xf3n (A).\n\n");
             char promptAdup[64];
-            snprintf(promptAdup, sizeof(promptAdup),
-                     "  \xbf" "Desea agregar otro Estado de aceptaci%cn (A)? (S/N): ", 243);
+            conSnprintf(promptAdup, sizeof(promptAdup),
+                     "  \xbf" "Desea agregar otro Estado de aceptaci\xf3n (A)? (S/N): ");
             resp = pedirConfirmacion(promptAdup);
             if (resp == 'N' && cantidadAceptacion == 0) {
-                printf("  Error: Los Estados de aceptaci%cn (A) deben contener al menos un estado.\n\n", 243);
+                conEscribir("  Error: Los Estados de aceptaci\xf3n (A) deben contener al menos un estado.\n\n");
                 resp = 'S';
             }
             continue;
@@ -714,16 +723,17 @@ void registrarEstadosAceptacion(AFD *afd) {
         /* Registrar como estado de aceptacion */
         nodo->aceptacion = 1;
         cantidadAceptacion++;
-        printf("  Estado '%s' registrado como Estado de aceptaci%cn (A).\n\n", buf, 243);
+        conEscribir("  Estado '");
+        conEscribir(buf);
+        conEscribir("' registrado como Estado de aceptaci\xf3n (A).\n\n");
 
         char promptA[64];
-        snprintf(promptA, sizeof(promptA),
-                 "  \xbf" "Desea agregar otro Estado de aceptaci%cn (A)? (S/N): ", 243);
+        conSnprintf(promptA, sizeof(promptA),
+                 "  \xbf" "Desea agregar otro Estado de aceptaci\xf3n (A)? (S/N): ");
         resp = pedirConfirmacion(promptA);
 
         if (resp == 'N' && cantidadAceptacion == 0) {
-            /* CP-26: no permite terminar con A vacio */
-            printf("  Error: Los Estados de aceptaci%cn (A) deben contener al menos un estado.\n\n", 243);
+            conEscribir("  Error: Los Estados de aceptaci\xf3n (A) deben contener al menos un estado.\n\n");
             resp = 'S';
         }
 
@@ -737,15 +747,14 @@ void registrarEstadosAceptacion(AFD *afd) {
  *               Itera automaticamente todos los pares hasta completar f.
  * Parametros  : afd -- puntero al AFD
  * Retorna     : (void)
- * RF-07
  */
 void registrarFuncionTransicion(AFD *afd) {
     char buf[MAX_BUF];
 
     limpiarPantalla();
     mostrarEncabezado();
-    printf("\n  -- Registro de la Funcion de transicion (f) --\n");
-    printf("  Se solicitara f(q, s) = q' para cada par (q, s) en el Conjunto de estados posibles (Q) x Alfabeto de simbolos de entrada (Sigma_E).\n\n");
+    conEscribir("\n  -- Registro de la Funcion de transicion (f) --\n");
+    conEscribir("  Se solicitara f(q, s) = q' para cada par (q, s) en el Conjunto de estados posibles (Q) x Alfabeto de simbolos de entrada (Sigma_E).\n\n");
 
     /* Iterar sobre Q x Sigma_E */
     Nodo *nodoActual = afd->Q;
@@ -755,34 +764,44 @@ void registrarFuncionTransicion(AFD *afd) {
             Nodo *destino = NULL;
 
             do {
-                printf("  f(%s, %c) = ", nodoActual->nombre, simboloActual->valor);
+                conEscribir("  f(");
+                conEscribir(nodoActual->nombre);
+                conEscribir(", ");
+                conEscribirChar(simboloActual->valor);
+                conEscribir(") = ");
                 leerLinea(buf, MAX_BUF);
 
                 /* Validar: no vacio */
                 if (buf[0] == '\0') {
-                    printf("  Error: Entrada inv%clida. Intente de nuevo.\n\n", 225);
+                    conEscribir("  Error: Entrada inv\xe1lida. Intente de nuevo.\n\n");
                     continue;
                 }
 
                 /* Validar: q' en Q */
                 destino = nodoExiste(afd->Q, buf);
                 if (destino == NULL) {
-                    printf("  Error: El estado '%s' no existe en el Conjunto de estados posibles (Q). Intente de nuevo.\n\n", buf);
+                    conEscribir("  Error: El estado '");
+                    conEscribir(buf);
+                    conEscribir("' no existe en el Conjunto de estados posibles (Q). Intente de nuevo.\n\n");
                 }
 
             } while (destino == NULL);
 
-            /* RF-07: registrar f(q,s) = q' mediante Arista */
             agregarArista(nodoActual, simboloActual->valor, '\0', destino);
-            printf("  Transicion f(%s, %c) = %s registrada.\n\n",
-                   nodoActual->nombre, simboloActual->valor, destino->nombre);
+            conEscribir("  Transicion f(");
+            conEscribir(nodoActual->nombre);
+            conEscribir(", ");
+            conEscribirChar(simboloActual->valor);
+            conEscribir(") = ");
+            conEscribir(destino->nombre);
+            conEscribir(" registrada.\n\n");
 
             simboloActual = simboloActual->siguiente;
         }
         nodoActual = nodoActual->Apuntador;
     }
 
-    printf("  Funcion de transicion (f) completamente definida.\n\n");
+    conEscribir("  Funcion de transicion (f) completamente definida.\n\n");
 }
 
 /*
@@ -792,15 +811,14 @@ void registrarFuncionTransicion(AFD *afd) {
  *               Solo para AFDT. Actualiza el campo ALPS de cada Arista existente.
  * Parametros  : afd -- puntero al AFD (debe ser TIPO_AFDT)
  * Retorna     : (void)
- * RF-08
  */
 void registrarFuncionSalida(AFD *afd) {
     char buf[MAX_BUF];
 
     limpiarPantalla();
     mostrarEncabezado();
-    printf("\n  -- Registro de la Funcion de salida (g) --\n");
-    printf("  Se solicitara g(q, s) = y para cada par (q, s) en el Conjunto de estados posibles (Q) x Alfabeto de simbolos de entrada (Sigma_E).\n\n");
+    conEscribir("\n  -- Registro de la Funcion de salida (g) --\n");
+    conEscribir("  Se solicitara g(q, s) = y para cada par (q, s) en el Conjunto de estados posibles (Q) x Alfabeto de simbolos de entrada (Sigma_E).\n\n");
 
     Nodo *nodoActual = afd->Q;
     while (nodoActual != NULL) {
@@ -809,19 +827,24 @@ void registrarFuncionSalida(AFD *afd) {
             char y = '\0';
 
             do {
-                printf("  g(%s, %c) = ", nodoActual->nombre, simboloActual->valor);
+                conEscribir("  g(");
+                conEscribir(nodoActual->nombre);
+                conEscribir(", ");
+                conEscribirChar(simboloActual->valor);
+                conEscribir(") = ");
                 leerLinea(buf, MAX_BUF);
 
                 /* Validar: exactamente 1 caracter */
                 if (buf[0] == '\0' || buf[1] != '\0') {
-                    printf("  Error: Entrada inv%clida. Intente de nuevo.\n\n", 225);
+                    conEscribir("  Error: Entrada inv\xe1lida. Intente de nuevo.\n\n");
                     continue;
                 }
 
                 /* Validar: y en Sigma_S */
                 if (!simboloExiste(afd->alfaSalida, buf[0])) {
-                    printf("  Error: El simbolo '%c' no pertenece al Alfabeto de simbolos de salida (Sigma_S). Intente de nuevo.\n\n",
-                           buf[0]);
+                    conEscribir("  Error: El simbolo '");
+                    conEscribirChar(buf[0]);
+                    conEscribir("' no pertenece al Alfabeto de simbolos de salida (Sigma_S). Intente de nuevo.\n\n");
                     continue;
                 }
 
@@ -829,21 +852,26 @@ void registrarFuncionSalida(AFD *afd) {
 
             } while (y == '\0');
 
-            /* Actualizar el campo ALPS en la Arista correspondiente (ya creada en RF-07) */
+            /* Actualizar ALPS en la Arista correspondiente (creada en RF-07) */
             Arista *arista = buscarArista(nodoActual, simboloActual->valor);
             if (arista != NULL) {
                 arista->ALPS = y;
             }
 
-            printf("  Salida g(%s, %c) = %c registrada.\n\n",
-                   nodoActual->nombre, simboloActual->valor, y);
+            conEscribir("  Salida g(");
+            conEscribir(nodoActual->nombre);
+            conEscribir(", ");
+            conEscribirChar(simboloActual->valor);
+            conEscribir(") = ");
+            conEscribirChar(y);
+            conEscribir(" registrada.\n\n");
 
             simboloActual = simboloActual->siguiente;
         }
         nodoActual = nodoActual->Apuntador;
     }
 
-    printf("  Funcion de salida (g) completamente definida.\n\n");
+    conEscribir("  Funcion de salida (g) completamente definida.\n\n");
 }
 
 /* -------------------------------------- */
@@ -854,34 +882,35 @@ void registrarFuncionSalida(AFD *afd) {
  * capturarPalabra -- RF-09
  * Proposito   : Solicitar y validar la palabra de entrada en Sigma_E+.
  *               Valida: palabra no vacia, todos los simbolos en Sigma_E.
- * Parametros  : afd -- puntero al AFD (para consultar Î£_E)
+ * Parametros  : afd -- puntero al AFD (para consultar Sigma_E)
  * Retorna     : cadena dinamica con la palabra (el llamador debe liberar). RNF-01.
- * RF-09
  */
 char *capturarPalabra(const AFD *afd) {
     char buf[MAX_BUF];
     const char *tipoPalabra = (afd->tipo == TIPO_AFDT)
                               ? "a traducir" : "a validar";
 
-    printf("\n  -- Captura de la Palabra (a) --\n\n");
+    conEscribir("\n  -- Captura de la Palabra (a) --\n\n");
 
     /* Mostrar Sigma_E como referencia */
-    printf("  Alfabeto de simbolos de entrada (Sigma_E) = { ");
+    conEscribir("  Alfabeto de simbolos de entrada (Sigma_E) = { ");
     const Simbolo *s = afd->alfaEntrada;
     while (s != NULL) {
-        printf("%c", s->valor);
-        if (s->siguiente != NULL) printf(", ");
+        conEscribirChar(s->valor);
+        if (s->siguiente != NULL) conEscribir(", ");
         s = s->siguiente;
     }
-    printf(" }\n\n");
+    conEscribir(" }\n\n");
 
     while (1) {
-        printf("  Ingrese la palabra %s: ", tipoPalabra);
+        conEscribir("  Ingrese la palabra ");
+        conEscribir(tipoPalabra);
+        conEscribir(": ");
         leerLinea(buf, MAX_BUF);
 
         /* Validar: no vacia */
         if (buf[0] == '\0') {
-            printf("  Error: Entrada inv%clida. Ingrese al menos un s%cmbolo.\n\n", 225, 237);
+            conEscribir("  Error: Entrada inv\xe1lida. Ingrese al menos un s\xedmbolo.\n\n");
             continue;
         }
 
@@ -895,7 +924,7 @@ char *capturarPalabra(const AFD *afd) {
         }
 
         if (!valido) {
-            printf("  Error: La Palabra (a) contiene s%cmbolos fuera del Alfabeto de s%cmbolos de entrada (Sigma_E). Intente de nuevo.\n\n", 237, 237);
+            conEscribir("  Error: La Palabra (a) contiene s\xedmbolos fuera del Alfabeto de s\xedmbolos de entrada (Sigma_E). Intente de nuevo.\n\n");
             continue;
         }
 
@@ -903,7 +932,7 @@ char *capturarPalabra(const AFD *afd) {
         size_t len = strlen(buf) + 1;
         char *alpha = (char *)malloc(len);
         if (alpha == NULL) {
-            fprintf(stderr, "Error: No se pudo asignar memoria.\n");
+            conEscribirError("Error: No se pudo asignar memoria.\n");
             return NULL;
         }
         strncpy(alpha, buf, len);
@@ -915,45 +944,45 @@ char *capturarPalabra(const AFD *afd) {
  * procesarPalabra -- RF-10 (AFDV y AFDT) + RF-11 (solo AFDT)
  * Proposito   : Procesar la palabra simbolo por simbolo de izquierda a derecha,
  *               iniciando desde q0.
- *               - Muestra en pantalla la traza: (qn, si) -> q' (RF-10).
+ *               - Muestra la traza: (qn, si) -> q' (RF-10).
  *               - Para AFDT tambien muestra g(qn,si)=y y construye la traduccion (RF-11).
- *               - Al terminar la palabra, determina si qn esta en A.
+ *               - Al terminar, determina si qn esta en A.
  *               - Si la transicion es indefinida (NULL), detiene y reporta error.
  * Parametros  : afd      -- puntero al AFD
  *               alpha    -- palabra de entrada
  *               esValida -- (salida) 1 si qn en A, 0 si no
  * Retorna     : cadena de traduccion dinamica para AFDT (llamador libera), NULL para AFDV.
- * RF-10, RF-11
  */
 char *procesarPalabra(const AFD *afd, const char *alpha, int *esValida) {
     int    n       = (int)strlen(alpha);
-    Nodo  *qActual = afd->q0;    /* qn := q0 */
-    char  *beta    = NULL;        /* beta := vacio (solo AFDT) */
+    Nodo  *qActual = afd->q0;
+    char  *beta    = NULL;
     int    longitudBeta = 0;
 
     *esValida = 0;
 
     /* RNF-01: reservar beta dinamicamente para AFDT */
     if (afd->tipo == TIPO_AFDT) {
-        /* En el peor caso beta tiene n chars + '\0' */
         beta = (char *)malloc((size_t)(n + 1));
         if (beta == NULL) {
-            fprintf(stderr, "Error: No se pudo asignar memoria.\n");
+            conEscribirError("Error: No se pudo asignar memoria.\n");
             return NULL;
         }
         beta[0] = '\0';
     }
 
     if (afd->tipo == TIPO_AFDV) {
-        printf("\n  -- Procesamiento de la palabra \"%s\" --\n\n", alpha);
-        printf("  %-18s %-10s %-18s\n", "Estado actual (qn)", "Simbolo", "Estado destino (q')");
-        printf("  %-18s %-10s %-18s\n", "------------------", "-------", "-------------------");
+        conEscribir("\n  -- Procesamiento de la palabra \"");
+        conEscribir(alpha);
+        conEscribir("\" --\n\n");
+        conEscribir("  Estado actual (qn)     Simbolo    Estado destino (q')\n");
+        conEscribir("  ------------------     -------    -------------------\n");
     } else {
-        printf("\n  -- Traduccion de la palabra \"%s\" --\n\n", alpha);
-        printf("  %-18s %-10s %-10s %-12s %-18s\n",
-               "Estado actual (qn)", "Simbolo", "Salida (y)", "Traduccion parcial", "Estado destino (q')");
-        printf("  %-18s %-10s %-10s %-12s %-18s\n",
-               "------------------", "-------", "----------", "------------------", "-------------------");
+        conEscribir("\n  -- Traduccion de la palabra \"");
+        conEscribir(alpha);
+        conEscribir("\" --\n\n");
+        conEscribir("  Estado actual (qn)     Simbolo    Salida (y)    Trad. parcial    Estado destino (q')\n");
+        conEscribir("  ------------------     -------    ----------    -------------    -------------------\n");
     }
 
     /* Recorrer la palabra simbolo por simbolo */
@@ -964,25 +993,61 @@ char *procesarPalabra(const AFD *afd, const char *alpha, int *esValida) {
         Arista *arista = buscarArista(qActual, si);
 
         if (arista == NULL || arista->Flecha == NULL) {
-            /* Transicion indefinida -> detener con error */
-            printf("\n  Error: Transicion indefinida para f(%s, %c). Procesamiento detenido.\n\n",
-                   qActual->nombre, si);
+            conEscribir("\n  Error: Transicion indefinida para f(");
+            conEscribir(qActual->nombre);
+            conEscribir(", ");
+            conEscribirChar(si);
+            conEscribir("). Procesamiento detenido.\n\n");
             *esValida = 0;
-            return beta; /* Retorna lo que se haya construido de Î² (puede ser "") */
+            return beta;
         }
 
         if (afd->tipo == TIPO_AFDV) {
-            /* RF-10: imprimir traza */
-            printf("  %-18s %-10c %-18s\n",
-                   qActual->nombre, si, arista->Flecha->nombre);
+            /* RF-10: imprimir traza con alineacion fija */
+            char fila[128];
+            /* columna 1: estado actual (18 chars) */
+            int pos = 0;
+            const char *nom = qActual->nombre;
+            for (int k = 0; nom[k] != '\0' && pos < 18; k++) fila[pos++] = nom[k];
+            while (pos < 20) fila[pos++] = ' ';
+            /* columna 2: simbolo (10 chars) */
+            fila[pos++] = si;
+            while (pos < 31) fila[pos++] = ' ';
+            /* columna 3: destino */
+            const char *dest = arista->Flecha->nombre;
+            for (int k = 0; dest[k] != '\0'; k++) fila[pos++] = dest[k];
+            fila[pos++] = '\n';
+            fila[pos]   = '\0';
+            conEscribir("  ");
+            conEscribir(fila);
         } else {
             /* RF-11: g(qn, si) = y; beta := beta + y */
             char y = arista->ALPS;
             beta[longitudBeta++] = y;
             beta[longitudBeta]   = '\0';
 
-            printf("  %-18s %-10c %-10c %-12s %-18s\n",
-                   qActual->nombre, si, y, beta, arista->Flecha->nombre);
+            char fila[160];
+            int pos = 0;
+            /* col 1: estado actual */
+            const char *nom = qActual->nombre;
+            for (int k = 0; nom[k] != '\0' && pos < 18; k++) fila[pos++] = nom[k];
+            while (pos < 23) fila[pos++] = ' ';
+            /* col 2: simbolo */
+            fila[pos++] = si;
+            while (pos < 34) fila[pos++] = ' ';
+            /* col 3: salida */
+            fila[pos++] = y;
+            while (pos < 47) fila[pos++] = ' ';
+            /* col 4: traduccion parcial */
+            for (int k = 0; beta[k] != '\0'; k++) fila[pos++] = beta[k];
+            while (pos < 64) fila[pos++] = ' ';
+            /* col 5: destino */
+            const char *dest = arista->Flecha->nombre;
+            for (int k = 0; dest[k] != '\0'; k++) fila[pos++] = dest[k];
+            fila[pos++] = '\n';
+            fila[pos]   = '\0';
+            conEscribir("  ");
+            conEscribir(fila);
         }
 
         /* qn := q' */
@@ -992,21 +1057,25 @@ char *procesarPalabra(const AFD *afd, const char *alpha, int *esValida) {
     /* Determinar si la palabra es valida: qn en A */
     *esValida = qActual->aceptacion;
 
-    printf("\n  Estado final alcanzado: %s\n", qActual->nombre);
+    conEscribir("\n  Estado final alcanzado: ");
+    conEscribir(qActual->nombre);
+    conEscribir("\n");
 
     if (*esValida) {
-        printf("  Resultado: Palabra V%cLIDA (qn en A).\n", 193);
+        conEscribir("  Resultado: Palabra V\xc1LIDA (qn en A).\n");
     } else {
-        printf("  Resultado: Palabra INV%cLIDA (qn no pertenece a A).\n", 193);
+        conEscribir("  Resultado: Palabra INV\xc1LIDA (qn no pertenece a A).\n");
     }
 
     if (afd->tipo == TIPO_AFDT) {
-        printf("  Traduccion obtenida = \"%s\"\n", beta);
+        conEscribir("  Traduccion obtenida = \"");
+        conEscribir(beta);
+        conEscribir("\"\n");
     }
 
-    printf("\n");
+    conEscribir("\n");
 
-    return beta; /* NULL para AFDV; cadena de traduccion para AFDT */
+    return beta;
 }
 
 /* ----------------------------- */
@@ -1019,7 +1088,6 @@ char *procesarPalabra(const AFD *afd, const char *alpha, int *esValida) {
  *               Libera: Q (con sus Aristas), Sigma_E y Sigma_S.
  * Parametros  : afd -- puntero al AFD (sus listas quedan en NULL)
  * Retorna     : (void)
- * RNF-02
  */
 void liberarAFD(AFD *afd) {
     liberarNodos(&afd->Q);

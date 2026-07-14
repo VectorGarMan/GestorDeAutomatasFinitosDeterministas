@@ -18,7 +18,6 @@
  *     [CP-XX] Descripción
  *       Entrada   : ...
  *       Esperado  : ...
- *       Obtenido  : ...
  *       Estado    : PASADO / FALLIDO
  *
  *   Para compilar junto al proyecto principal usar el flag -DEJECUCION_PRUEBAS.
@@ -26,11 +25,10 @@
  * =============================================================================
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* Incluir SOLO los headers del proyecto — sin librerías externas */
+/* Incluir SOLO los headers del proyecto */
 #include "../include/afd.h"
 #include "../include/menu.h"
 #include "../include/estadisticas.h"
@@ -46,19 +44,27 @@ static int pruebas_fallidas= 0;
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  Macro auxiliar de verificación                                             */
 /* ─────────────────────────────────────────────────────────────────────────── */
-#define VERIFICAR(id, desc, entrada, esperado_str, condicion)        \
-    do {                                                             \
-        pruebas_total++;                                             \
-        printf("\n  [%s] %s\n", id, desc);                          \
-        printf("    Entrada   : %s\n", entrada);                    \
-        printf("    Esperado  : %s\n", esperado_str);               \
-        if (condicion) {                                             \
-            pruebas_pasadas++;                                       \
-            printf("    Estado    : PASADO\n");                     \
-        } else {                                                     \
-            pruebas_fallidas++;                                      \
-            printf("    Estado    : FALLIDO\n");                     \
-        }                                                            \
+#define VERIFICAR(id, desc, entrada, esperado_str, condicion)   \
+    do {                                                        \
+        pruebas_total++;                                        \
+        conEscribir("\n  [");                                   \
+        conEscribir(id);                                        \
+        conEscribir("] ");                                      \
+        conEscribir(desc);                                      \
+        conEscribir("\n");                                      \
+        conEscribir("    Entrada   : ");                        \
+        conEscribir(entrada);                                   \
+        conEscribir("\n");                                      \
+        conEscribir("    Esperado  : ");                        \
+        conEscribir(esperado_str);                              \
+        conEscribir("\n");                                      \
+        if (condicion) {                                        \
+            pruebas_pasadas++;                                  \
+            conEscribir("    Estado    : PASADO\n");            \
+        } else {                                                \
+            pruebas_fallidas++;                                 \
+            conEscribir("    Estado    : FALLIDO\n");           \
+        }                                                       \
     } while (0)
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -142,7 +148,7 @@ static AFD construirAFDT_prueba(void) {
 
 /* ── CP-01 a CP-04: RF-01 Menú principal ─────────────────────────────────── */
 static void pruebas_rf01(void) {
-    printf("\n  ======== RF-01: Menu de seleccion de tipo de AFD ========\n");
+    conEscribir("\n  ======== RF-01: Menu de seleccion de tipo de AFD ========\n");
 
     /* CP-01: Opción T válida */
     {
@@ -183,7 +189,7 @@ static void pruebas_rf01(void) {
 
 /* ── CP-05 a CP-09: RF-02 Registro de Σ_E ───────────────────────────────── */
 static void pruebas_rf02(void) {
-    printf("\n  ======== RF-02: Registro de Sigma_E ========\n");
+    conEscribir("\n  ======== RF-02: Registro de Sigma_E ========\n");
 
     /* CP-05: Registrar 0 y 1 correctamente */
     {
@@ -213,7 +219,6 @@ static void pruebas_rf02(void) {
     /* CP-07: Más de un carácter como símbolo ("ab") */
     {
         char *entrada = "ab";
-        /* |s| = 1 es requisito; "ab" tiene longitud 2 */
         int esInvalido = (strlen(entrada) != 1);
         VERIFICAR("CP-07", "Ingresar mas de un caracter como simbolo",
                   "Capturar ab",
@@ -226,7 +231,6 @@ static void pruebas_rf02(void) {
         Simbolo *alfa = NULL;
         agregarSimbolo(&alfa, '0');
         int existeAntes = simboloExiste(alfa, '0');
-        /* No agrega si ya existe */
         if (!simboloExiste(alfa, '0')) {
             agregarSimbolo(&alfa, '0');
         }
@@ -252,7 +256,7 @@ static void pruebas_rf02(void) {
 
 /* ── CP-10 a CP-15: RF-03 Registro de Σ_S ───────────────────────────────── */
 static void pruebas_rf03(void) {
-    printf("\n  ======== RF-03: Registro de Sigma_S ========\n");
+    conEscribir("\n  ======== RF-03: Registro de Sigma_S ========\n");
 
     /* CP-10: Registrar x e y correctamente */
     {
@@ -325,7 +329,7 @@ static void pruebas_rf03(void) {
 
 /* ── CP-16 a CP-21: RF-04 Registro de Q ─────────────────────────────────── */
 static void pruebas_rf04(void) {
-    printf("\n  ======== RF-04: Registro de Q ========\n");
+    conEscribir("\n  ======== RF-04: Registro de Q ========\n");
 
     /* CP-16: Registrar q1 y q2 válidos */
     {
@@ -399,7 +403,7 @@ static void pruebas_rf04(void) {
 
 /* ── CP-22 a CP-23: RF-05 Estado inicial ─────────────────────────────────── */
 static void pruebas_rf05(void) {
-    printf("\n  ======== RF-05: Registro de q0 ========\n");
+    conEscribir("\n  ======== RF-05: Registro de q0 ========\n");
 
     /* CP-22: Estado inicial válido */
     {
@@ -432,7 +436,7 @@ static void pruebas_rf05(void) {
 
 /* ── CP-24 a CP-27: RF-06 Estados de aceptación ─────────────────────────── */
 static void pruebas_rf06(void) {
-    printf("\n  ======== RF-06: Registro de A ========\n");
+    conEscribir("\n  ======== RF-06: Registro de A ========\n");
 
     /* CP-24: Estado de aceptación válido */
     {
@@ -483,9 +487,8 @@ static void pruebas_rf06(void) {
         agregarNodo(&Q, "q2");
         Nodo *nq1 = nodoExiste(Q, "q1");
         nq1->aceptacion = 1;
-        /* Intento de duplicar */
         int yaTieneAcept = nq1->aceptacion;
-        int rechazado = (yaTieneAcept == 1); /* Ya era de aceptación */
+        int rechazado = (yaTieneAcept == 1);
         VERIFICAR("CP-27", "Ingresar estado de aceptacion duplicado",
                   "Con Q={q1,q2}, capturar q1 y despues q1",
                   "Rechaza el estado repetido; A permanece {q1}",
@@ -496,12 +499,11 @@ static void pruebas_rf06(void) {
 
 /* ── CP-28 a CP-29: RF-07 Función de transición ─────────────────────────── */
 static void pruebas_rf07(void) {
-    printf("\n  ======== RF-07: Registro de f ========\n");
+    conEscribir("\n  ======== RF-07: Registro de f ========\n");
 
     /* CP-28: Completar ƒ con estados válidos */
     {
         AFD afd = construirAFDV_prueba();
-        /* Verificar que todas las combinaciones Q × Σ_E tienen arista */
         int completo = 1;
         Nodo *nodo = afd.Q;
         while (nodo != NULL) {
@@ -537,7 +539,7 @@ static void pruebas_rf07(void) {
 
 /* ── CP-30 a CP-34: RF-08 Función de salida ─────────────────────────────── */
 static void pruebas_rf08(void) {
-    printf("\n  ======== RF-08: Registro de g ========\n");
+    conEscribir("\n  ======== RF-08: Registro de g ========\n");
 
     /* CP-30: Completar ɠ con símbolos válidos */
     {
@@ -608,10 +610,6 @@ static void pruebas_rf08(void) {
 
     /* CP-34: Dejar celda de ɠ sin definir */
     {
-        /*
-         * Simulamos un AFD incompleto: creamos un par (q1, '1') sin arista.
-         * La búsqueda retorna NULL → no se puede avanzar.
-         */
         Nodo *Q = NULL;
         Simbolo *alfa = NULL;
         agregarNodo(&Q, "q1");
@@ -630,7 +628,7 @@ static void pruebas_rf08(void) {
 
 /* ── CP-35 a CP-38: RF-09 Captura de α ──────────────────────────────────── */
 static void pruebas_rf09(void) {
-    printf("\n  ======== RF-09: Registro de alfa ========\n");
+    conEscribir("\n  ======== RF-09: Registro de alfa ========\n");
 
     /* CP-35: Palabra válida en Σ_E */
     {
@@ -676,7 +674,7 @@ static void pruebas_rf09(void) {
                   esVacia);
     }
 
-    /* CP-38: Palabra de más de 15 caracteres se acepta (no hay límite en RF-09) */
+    /* CP-38: Palabra de más de 15 caracteres (no hay límite en RF-09) */
     {
         Simbolo *alfa = NULL;
         agregarSimbolo(&alfa, '1');
@@ -698,7 +696,7 @@ static void pruebas_rf09(void) {
 
 /* ── CP-39 a CP-42: RF-10 + RF-11 Procesamiento ─────────────────────────── */
 static void pruebas_rf10_rf11(void) {
-    printf("\n  ======== RF-10 + RF-11: Procesamiento de alfa ========\n");
+    conEscribir("\n  ======== RF-10 + RF-11: Procesamiento de alfa ========\n");
 
     /* CP-39: AFDT con palabra aceptada (ab → β="xy", estado final q1 ∈ A) */
     {
@@ -757,7 +755,7 @@ static void pruebas_rf10_rf11(void) {
 
 /* ── CP-43 a CP-45: RF-13 Estadísticas locales ───────────────────────────── */
 static void pruebas_rf13(void) {
-    printf("\n  ======== RF-13: Estadisticas del ciclo del AFD ========\n");
+    conEscribir("\n  ======== RF-13: Estadisticas del ciclo del AFD ========\n");
 
     /* CP-43: Procesar dos palabras (1 válida + 1 inválida) */
     {
@@ -802,9 +800,9 @@ static void pruebas_rf13(void) {
     }
 }
 
-/* ── CP-46 a CP-50: RF-12 y RF-14 Control posterior + estadísticas globales  */
+/* ── CP-46 a CP-50: RF-12 y RF-14 Control posterior + estadísticas globales */
 static void pruebas_rf12_rf14(void) {
-    printf("\n  ======== RF-12: Control posterior al procesamiento ========\n");
+    conEscribir("\n  ======== RF-12: Control posterior al procesamiento ========\n");
 
     /* CP-46: Respuesta inválida a "¿otra palabra?" */
     {
@@ -846,7 +844,7 @@ static void pruebas_rf12_rf14(void) {
                   esInvalido);
     }
 
-    printf("\n  ======== RF-14: Estadisticas del ciclo completo ========\n");
+    conEscribir("\n  ======== RF-14: Estadisticas del ciclo completo ========\n");
 
     /* CP-50: Reporte global correcto para 2 AFD */
     {
@@ -881,7 +879,7 @@ static void pruebas_rf12_rf14(void) {
 
 /* ── CP-51 a CP-53: RNF-01 y RNF-02 Memoria dinámica ────────────────────── */
 static void pruebas_rnf01_rnf02(void) {
-    printf("\n  ======== RNF-01 + RNF-02: Memoria dinamica ========\n");
+    conEscribir("\n  ======== RNF-01 + RNF-02: Memoria dinamica ========\n");
 
     /* CP-51: Estructuras dinámicas para componentes del AFD */
     {
@@ -935,17 +933,16 @@ static void pruebas_rnf01_rnf02(void) {
 
 /* ── CP-54: RF-10/RF-11 Única consulta por símbolo ──────────────────────── */
 static void prueba_cp54(void) {
-    printf("\n  ======== RF-10 + RF-11: Una consulta por simbolo ========\n");
+    conEscribir("\n  ======== RF-10 + RF-11: Una consulta por simbolo ========\n");
 
-    /* CP-54: Procesar palabra de 2 simbolos ("10"):
+    /*
+     * CP-54: Procesar palabra de 2 simbolos ("10"):
      *   f(q0,'1') -> q1  (consulta 1)
      *   f(q1,'0') -> q0  (consulta 2)
      *   Estado final q0 no en A -> invalida.
-     * Con solo 2 simbolos queda demostrado que se hace exactamente
-     * una consulta a f por simbolo, sin iteraciones extras. */
+     */
     {
         AFD afd = construirAFDV_prueba();
-
         int esValida = 0;
         char *beta = procesarPalabra(&afd, "10", &esValida);
         /* 2 simbolos procesados correctamente, estado final q0 no en A */
@@ -961,7 +958,7 @@ static void prueba_cp54(void) {
 
 /* ── CP-55: RNF-12 Idioma español ───────────────────────────────────────── */
 static void prueba_cp55(void) {
-    printf("\n  ======== RNF-12: Idioma espanol ========\n");
+    conEscribir("\n  ======== RNF-12: Idioma espanol ========\n");
 
     /*
      * CP-55: Verificar que los mensajes del sistema están en español.
@@ -986,11 +983,11 @@ static void prueba_cp55(void) {
 /*  ejecutarPruebas — Punto de entrada de la suite de pruebas                */
 /* ══════════════════════════════════════════════════════════════════════════ */
 void ejecutarPruebas(void) {
-    printf("\n");
-    printf("  +================================================================+\n");
-    printf("  |  SUITE DE PRUEBAS - Gestor de Automatas Finitos Deterministas  |\n");
-    printf("  |  Casos CP-01 a CP-55 segun ERS Seccion 6                       |\n");
-    printf("  +================================================================+\n");
+    conEscribir("\n");
+    conEscribir("  +================================================================+\n");
+    conEscribir("  |  SUITE DE PRUEBAS - Gestor de Automatas Finitos Deterministas  |\n");
+    conEscribir("  |  Casos CP-01 a CP-55 segun ERS Seccion 6                       |\n");
+    conEscribir("  +================================================================+\n");
 
     pruebas_rf01();
     pruebas_rf02();
@@ -1009,13 +1006,16 @@ void ejecutarPruebas(void) {
     prueba_cp55();
 
     /* Resumen final */
-    printf("\n  ============================================\n");
-    printf("  RESUMEN DE PRUEBAS\n");
-    printf("  ============================================\n");
-    printf("    Total de casos  : %d\n", pruebas_total);
-    printf("    PASADOS         : %d\n", pruebas_pasadas);
-    printf("    FALLIDOS        : %d\n", pruebas_fallidas);
-    printf("  ============================================\n\n");
+    conEscribir("\n  ============================================\n");
+    conEscribir("  RESUMEN DE PRUEBAS\n");
+    conEscribir("  ============================================\n");
+    conEscribir("    Total de casos  : ");
+    conEscribirInt(pruebas_total);
+    conEscribir("\n    PASADOS         : ");
+    conEscribirInt(pruebas_pasadas);
+    conEscribir("\n    FALLIDOS        : ");
+    conEscribirInt(pruebas_fallidas);
+    conEscribir("\n  ============================================\n\n");
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */

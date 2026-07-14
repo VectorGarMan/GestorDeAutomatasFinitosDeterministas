@@ -38,9 +38,7 @@
  * =============================================================================
  */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "../include/afd.h"
 #include "../include/menu.h"
@@ -77,7 +75,7 @@ int main(void) {
     inicializarEstadisticasGlobales(&global);
 
     char op;
-    char resp_afd = 'S'; /* Controla si el usuario desea registrar otro AFD */
+    char resp_afd = 'S';
 
     /* Bucle principal de sesion */
     do {
@@ -86,7 +84,7 @@ int main(void) {
 
         if (op == 'S') {
             /* RF-15: Salida desde el menu principal */
-            break; /* Salir del bucle -> ir a RF-14 y RF-15 */
+            break;
         }
 
         /* op = 'T' (AFDT) o op = 'V' (AFDV) */
@@ -95,7 +93,7 @@ int main(void) {
         /* RF-12: Preguntar si se desea registrar otro AFD */
         limpiarPantalla();
         mostrarEncabezado();
-        printf("\n");
+        conEscribir("\n");
         resp_afd = pedirConfirmacion("  \xbf" "Desea registrar otro AFD? (S/N): ");
 
     } while (resp_afd == 'S');
@@ -104,11 +102,11 @@ int main(void) {
     mostrarEstadisticasGlobales(&global);
 
     /* RF-15: Mensaje de despedida */
-    printf("\n%cGracias, adi%cs!\n\n", 161, 243);
+    conEscribir("\n\xa1" "Gracias, adi\xf3s!\n\n");
 
     /* RF-14: Pausa tecnica (congelar pantalla) */
     pausaTecnica();
-    
+
     return 0;
 }
 
@@ -126,8 +124,7 @@ int main(void) {
 /*  Retorna   : (void)                                                        */
 /* ========================================================================== */
 static void cicloAFD(char tipoAFD, EstadisticasGlobales *global) {
-    /* RNF-01: Inicializar la estructura AFD en el stack (los datos
-     *         internos se alojan dinamicamente en el heap) */
+    /* RNF-01: Inicializar la estructura AFD */
     AFD afd;
     afd.tipo        = tipoAFD;
     afd.Q           = NULL;
@@ -175,7 +172,7 @@ static void cicloAFD(char tipoAFD, EstadisticasGlobales *global) {
 
         /* RF-09: Capturar y validar la palabra */
         char *alpha = capturarPalabra(&afd);
-        if (alpha == NULL) break; /* Proteccion ante fallo de malloc */
+        if (alpha == NULL) break;
 
         /* RF-10 + RF-11: Procesar la palabra */
         int esValida = 0;
